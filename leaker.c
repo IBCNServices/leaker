@@ -86,7 +86,7 @@ void _Leaker_Dump(void)
     {
         _LEAK_T **table = _Leaker_Build_List();
         unsigned int i;
-        fprintf(stderr, "%lu allocations (%lu bytes) in table of %lu rows.\n",
+        fprintf(stderr, "%zu allocations (%zu bytes) in table of %zu rows.\n",
                 _leaker.count, _leaker.bytes - _leaker.count * GUARD_SIZE,
                 _leaker.rows);
         
@@ -100,13 +100,13 @@ void _Leaker_Dump(void)
     }
     
     if(_leaker.mismatches)
-        fprintf(stderr, "Mismatches: %lu allocation/deallocations don't match!\n",
+        fprintf(stderr, "Mismatches: %zu allocation/deallocations don't match!\n",
                 _leaker.mismatches);
     if(_leaker.overflows)
-        fprintf(stderr, "Overflows: %lu allocations overflowed (wrote off end)!\n",
+        fprintf(stderr, "Overflows: %zu allocations overflowed (wrote off end)!\n",
                 _leaker.overflows);
     if(_leaker.bad_frees)
-        fprintf(stderr, "Bad deallocs: %lu attempts made to deallocate unallocated pointers!\n",
+        fprintf(stderr, "Bad deallocs: %zu attempts made to deallocate unallocated pointers!\n",
                 _leaker.bad_frees);
     
     _leaker.overflows = overflows; /* restore current overflow count */
@@ -355,7 +355,7 @@ void _Leaker_Add(void *addr, size_t size, const char *alloc,
     
     if(*mover) /* if an address is allocated twice, we are in trouble! */
     {
-        fprintf(stderr, "%s:%s():%lu fatal error: address %p already in use!\n",
+        fprintf(stderr, "%s:%s():%zu fatal error: address %p already in use!\n",
                 file, func, line, addr);
         exit(2);
     }
@@ -395,7 +395,7 @@ size_t _Leaker_Remove(void *addr, const char *dealloc, const char *file,
     
     if(!*mover) /* given a bad pointer */
     {
-        fprintf(stderr,"\nLEAKER: %s:%s():%lu %s error: pointer was not allocated!\n\n",
+        fprintf(stderr,"\nLEAKER: %s:%s():%zu %s error: pointer was not allocated!\n\n",
                 file, func, line, dealloc);
         _leaker.bad_frees++;
         return 0;
@@ -410,13 +410,13 @@ size_t _Leaker_Remove(void *addr, const char *dealloc, const char *file,
         
     if(!_Leaker_Check_Guard(addr, temp->size)) /* guard overwritten */
     {
-        fprintf(stderr, "\nLEAKER: %s:%s():%lu checking error: wrote off end of memory allocated at %s:%s():%lu.\n\n",
+        fprintf(stderr, "\nLEAKER: %s:%s():%zu checking error: wrote off end of memory allocated at %s:%s():%zu.\n\n",
                 file, func, line, temp->file, temp->func, temp->line);
         _leaker.overflows++;
     }
     if(!_Leaker_Check_Dealloc(temp->alloc, dealloc)) /* wrong dealloc function */
     {
-        fprintf(stderr, "\nLEAKER: %s:%s():%lu mismatch error: memory allocated at %s:%s():%lu with %s, deallocated with %s.\n\n",
+        fprintf(stderr, "\nLEAKER: %s:%s():%zu mismatch error: memory allocated at %s:%s():%zu with %s, deallocated with %s.\n\n",
                 file, func, line, temp->file, temp->func, temp->line,
                 temp->alloc, dealloc);
         _leaker.mismatches++;
@@ -446,7 +446,7 @@ static _LEAK_T **_Leaker_Find(void *addr)
  */
 static unsigned long _Leaker_Hash(void *addr)
 {
-    unsigned long address = (unsigned long) addr;
+    unsigned long address = (uintptr_t) addr;
 	address = (~address) + (address << 21); /* (a << 21) - a - 1; */
 	address = address ^ (address >> 24);
 	address = (address + (address << 3)) + (address << 8); /* a * 265 */
@@ -511,7 +511,7 @@ static void _Leaker_Report(void)
         unsigned int i;
         _LEAK_T **table = _Leaker_Build_List();
         
-        fprintf(stderr, "Leaks found: %lu allocations (%lu bytes).\n",
+        fprintf(stderr, "Leaks found: %zu allocations (%zu bytes).\n",
                 _leaker.count, _leaker.bytes - _leaker.count * GUARD_SIZE);
         
         for(i = 0; i < _leaker.count; i++)
@@ -529,14 +529,14 @@ static void _Leaker_Report(void)
     
     /* report other errors */
     if(_leaker.mismatches)
-        fprintf(stderr, "Mismatches: %lu allocation/deallocations don't match.\n",
+        fprintf(stderr, "Mismatches: %zu allocation/deallocations don't match.\n",
                 _leaker.mismatches);
     
     if(_leaker.overflows)
-        fprintf(stderr, "Overflows: %lu allocations overflowed (wrote off end).\n",
+        fprintf(stderr, "Overflows: %zu allocations overflowed (wrote off end).\n",
                 _leaker.overflows);
     if(_leaker.bad_frees)
-        fprintf(stderr, "Bad deallocs: %lu attempts made to deallocate unallocated pointers.\n",
+        fprintf(stderr, "Bad deallocs: %zu attempts made to deallocate unallocated pointers.\n",
                 _leaker.bad_frees);
     
 }
@@ -544,11 +544,11 @@ static void _Leaker_Report(void)
 /* print the given entry */
 static void _Leaker_Print_Entry(_LEAK_T *entry)
 {
-    fprintf(stderr, "%s:%s():%lu memory leak: memory was not deallocated.\n",
+    fprintf(stderr, "%s:%s():%zu memory leak: memory was not deallocated.\n",
             entry->file, entry->func, entry->line);
     if(!_Leaker_Check_Guard(entry->addr, entry->size))
     {
-        fprintf(stderr, "%s:%s():%lu checking error: wrote off end of allocation.\n",
+        fprintf(stderr, "%s:%s():%zu checking error: wrote off end of allocation.\n",
                 entry->file, entry->func, entry->line);
         _leaker.overflows++;
     }
@@ -557,7 +557,7 @@ static void _Leaker_Print_Entry(_LEAK_T *entry)
 /* dump the given entry */
 static void _Leaker_Dump_Entry(_LEAK_T *entry)
 {
-    fprintf(stderr, "%s:%s():%lu address: %p bytes: %lu",
+    fprintf(stderr, "%s:%s():%zu address: %p bytes: %zu",
             entry->file, entry->func, entry->line, entry->addr,
             entry->size - GUARD_SIZE);
     if(!_Leaker_Check_Guard(entry->addr, entry->size))
