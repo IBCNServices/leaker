@@ -538,7 +538,8 @@ static void _Leaker_Report(void)
     if(_leaker.bad_frees)
         fprintf(stderr, "Bad deallocs: %zu attempts made to deallocate unallocated pointers.\n",
                 _leaker.bad_frees);
-    
+    fprintf(stdout, "\nPRESS ANY KEY TO EXIT PROGRAM\n");
+    getchar();
 }
 
 /* print the given entry */
